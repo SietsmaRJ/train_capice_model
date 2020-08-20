@@ -1,8 +1,12 @@
 # Train Capice Model
 ###### A placeholder repository till train model is implemented in the [CAPICE](https://github.com/molgenis/capice) repository.
 
+This tool is developed within PyCharm 2020.2 on an UNIX type system. Performance on other systems is not guaranteed.
+
 # Requirements
-Python 3.7+ (Does not work for python 3.6 or lower)
+Python 3.7+ 
+
+Performance on python 3.6 or lower is not tested.
 
 # Install
 1. Clone or download the repository, forks are also viable.
