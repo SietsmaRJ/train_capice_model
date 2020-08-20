@@ -39,6 +39,10 @@ Optional arguments:
 - -s/ --split: Split the given input data into a train / test (0.8/0.2) set before any balancing, preprocessing or training happens. Will output both the training and testing dataset to output.
 - -v/ --verbose: When added, will print out a whole lot of print messages for easier debugging.
 
+### Example:
+
+python3 train_model.py -f path/to/cadd/annotated/file -o path/to/output -d -v
+
 # Output
 Always:
 - xgb_ransearch.pickle.dat: The pickled model instance. When argument -d/--default is used, will be a RandomizedSearchCV instance, instead of an XGBoostClassifier instance.
