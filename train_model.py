@@ -8,12 +8,13 @@ import scipy
 import pickle
 import argparse
 import os
+import json
 from sklearn.model_selection import train_test_split, RandomizedSearchCV
 
 
 class Train:
     def __init__(self, data_loc, output_loc, verbose, default,
-                 balanced_set, split):
+                 balanced_set, split, early_exit, specified_default=None):
         self.verbose = verbose
         self._printf("Input location: {}".format(data_loc), flush=True)
         self.data_loc = data_loc
@@ -26,7 +27,8 @@ class Train:
         self._printf("Balanced DS location: {}".format(balanced_set),
                      flush=True)
         self.split = split
-        self._printf("Split data set to: {}".format(split))
+        if split:
+            self._printf("Split data set to: {}".format(split))
         self.balanced_set_input = balanced_set
         self.data = self._load_data()
         if self.split:
@@ -35,6 +37,14 @@ class Train:
             self._export_dataset(self.data,
                                  name='train_balanced_dataset',
                                  feature='balanced ds')
+        self.defaults = {'learning_rate': 0.10495845238185281,
+                         'max_depth': 422,
+                         'n_estimators': 15}
+        if specified_default:
+            self._printf('Specified default file found, loading: {}'.format(specified_default))
+            self._load_defaults(specified_default)
+        if early_exit:
+            exit("Early exit command was supplied, exiting!")
         self.train_set = None
         self.test_set = None
         self.processed_features = []
@@ -45,6 +55,14 @@ class Train:
         self.ip = ImputePreprocess(self.verbose)
         self.cadd_vars = self.ip.get_cadd_vars()
         self._prepare_data()
+
+    def _load_defaults(self, json_loc):
+        with open(json_loc) as json_file:
+            defaults = json.load(json_file)
+        for key, value in defaults.items():
+            if key not in self.defaults.keys():
+                raise AttributeError('Default key {} not recognized!'.format(key))
+            self.defaults[key] = value
 
     def _prepare_data(self):
         train, test = train_test_split(self.data, test_size=0.2, random_state=4)
@@ -170,10 +188,11 @@ class Train:
         return vars_in_range
 
     def _split_data(self):
-        train, test = train_test_split(self.data, test_size=0.2, random_state=4)
-        self._export_dataset(dataset=train,
-                             name='splitted_train_dataset',
-                             feature='splitted train')
+        train, test = train_test_split(self.data, test_size=self.split, random_state=4)
+        if self.balanced_set_input:
+            self._export_dataset(dataset=train,
+                                 name='splitted_train_dataset',
+                                 feature='splitted train')
         self._export_dataset(dataset=test,
                              name='splitted_test_dataset',
                              feature='splitted test')
@@ -193,6 +212,8 @@ class Train:
         else:
             verbosity = 0
         self._printf('Preparing the estimator model', flush=True)
+        for key, value in self.defaults.items():
+            self._printf("Hyperparameter {} is set to: {}.".format(key, value))
         if self.default:
             model_estimator = xgb.XGBClassifier(
                 verbosity=verbosity,
@@ -208,9 +229,9 @@ class Train:
                 scale_pos_weight=1,
                 base_score=0.5,
                 random_state=0,
-                learning_rate=0.10495845238185281,
-                n_estimators=422,
-                max_depth=15
+                learning_rate=self.defaults['learning_rate'],
+                n_estimators=self.defaults['n_estimators'],
+                max_depth=self.defaults['max_depth']
             )
             ransearch1 = model_estimator
         else:
@@ -301,6 +322,13 @@ class ArgumentSupporter:
                               action='store_true',
                               help='Use the python3.6 model hyperparameters.')
 
+        optional.add_argument('-sd',
+                              '--specified_default',
+                              type=str,
+                              nargs=1,
+                              help='The location of a json containing "default" hyperparameters: learning_rate, '
+                                   'n_estimators and max_depth.')
+
         optional.add_argument('-v',
                               '--verbose',
                               action='store_true',
@@ -308,8 +336,16 @@ class ArgumentSupporter:
 
         optional.add_argument('-s',
                               '--split',
+                              default=False,
+                              type=float,
+                              help='Split the data into a training and test set before any processing happens.'
+                                   ' Requires a float percentage (0-1).')
+
+        optional.add_argument('-e',
+                              '--exit',
                               action='store_true',
-                              help='Split data before machine learning, to create an independent test set.')
+                              help='Activate early exit, right after creating the balanced dataset (if -f is used),'
+                                   'but before any preprocessing or training happens.')
 
         return parser
 
@@ -341,14 +377,22 @@ def main():
     verbose = arguments.get_argument('verbose')
     default = arguments.get_argument('default')
     split = arguments.get_argument('split')
+    if isinstance(split, list):
+        split = float(split[0])
     _check_input(input_loc, balanced)
+    specified_defaults = arguments.get_argument('specified_default')
+    if isinstance(specified_defaults, list):
+        specified_defaults = str(specified_defaults[0])
+    early_exit = arguments.get_argument('exit')
     train = Train(
         data_loc=input_loc,
         output_loc=output_loc,
         verbose=verbose,
         default=default,
         balanced_set=balanced,
-        split=split
+        split=split,
+        early_exit=early_exit,
+        specified_default=specified_defaults
     )
     train.train()
 

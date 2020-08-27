@@ -35,13 +35,25 @@ One of either the following arguments is required:
 - -b/ --balanced_ds: Same as -f/ --file, but will not balance out the allele frequency.
 
 Optional arguments:
-- -d/ --default: Use the XGBoost hyperparameters used by [Shuang et al.](https://www.medrxiv.org/content/10.1101/19012229v1.full.pdf) Will not use RandomizedSearchCV in the training phase.
-- -s/ --split: Split the given input data into a train / test (0.8/0.2) set before any balancing, preprocessing or training happens. Will output both the training and testing dataset to output.
+- -d/ --default: Use the XGBoost hyperparameters used by [Shuang et al.](https://genomemedicine.biomedcentral.com/articles/10.1186/s13073-020-00775-w) Will not use RandomizedSearchCV in the training phase.
+- -sd/ --specified_default: Location to a json containing keys: `learning_rate`, `max_depth`, `n_estimators` and their values to be used as the default hyperparameters in training the model.
+- -s/ --split: Splits the given data into a given test set of the given percentage size and train datasets before any preprocessing or training happens. Will output both the training and testing dataset to output. Expects a percentage from 0-1.
 - -v/ --verbose: When added, will print out a whole lot of print messages for easier debugging.
+- -e/ --exit: Early exit flag, when the given input data should just be split or balanced out. Will exit before any preprocessing or training happens.
 
 ### Example:
 
-python3 train_model.py -f path/to/cadd/annotated/file -o path/to/output -d -v
+- Balance out the given file and make cross validation models on the balanced set:
+    - `python3 train_model.py -f path/to/cadd/annotated/file -o path/to/output -d -v` 
+
+- Do not balance out the given dataset and split it to a 90/10 train/test dataset:
+    - `python3 train_model.py -b path/to/balanced/cadd/annotated/file -o path/to/output -v -s 0.1`
+
+- Make a model using previously found optimal hyperparameters, without balancing out the input dataset:
+    - `python3 train_model.py -b path/to/cadd/annotated/file -o path/to/output -v -s 0.1 -d -sd path/to/hyperparameters.json`
+    
+- Balance out and split a dataset, without training:
+    - `python3 train_model.py -f path/to/cadd/annotated/file -o path/to/output -s 0.1 -v -e`
 
 # Output
 Always:
@@ -54,12 +66,11 @@ When argument -d/--default is __NOT__ used:
 - xgb_optimal_model.pickle.dat: The best performing RandomizedSearchCV XGBoostClassifier model in a pickled instance.
 
 When argument -s/--split is used:
-- splitted_train_dataset: GZipped export of the split input data (80% of the data), used in training the model.
-- splitted_test_dataset: GZipped export of the split (20% of the data). The model never sees this data, not even in evaluation.
-
-Note:
-If the -s/--split argument splits too aggressively, you may want to alter line 173's 'test_size' 0.2 value to the desired percentage (in 0-1).
-
+- splitted_train_dataset: GZipped export of the split input data, used in training the model.
+- splitted_test_dataset: GZipped export of the split. The model never sees this data, not even in evaluation.
 
 # Why is this a placeholder?
 The author of this repository, Robert J. Sietsma, is currently working on refactoring the [CAPICE](https://github.com/molgenis/capice) repository. The train_model.py script will be added to this repository Soon(TM).
+
+#TODO
+- Make impute_preprocess more future proof by adding classes of CADD values and impute values.
