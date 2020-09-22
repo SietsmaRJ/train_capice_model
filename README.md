@@ -8,6 +8,13 @@ Python 3.7+
 
 Performance on python 3.6 or lower is not tested.
 
+The following Python packages are required:
+ * numpy ([v1.19.2](https://github.com/numpy/numpy/releases); [BSD 3-Clause License](https://www.numpy.org/license.html))
+ * pandas ([v1.1.0](https://github.com/pandas-dev/pandas); [BSD 3-Clause License](https://github.com/pandas-dev/pandas/blob/master/LICENSE))
+ * scipy ([v1.5.2](https://github.com/scipy/scipy); [BSD 3-Clause License](https://github.com/giampaolo/psutil/blob/master/LICENSE))
+ * scikit-learn ([v0.23.2](https://scikit-learn.org/stable/whats_new.html); [BSD 3-Clause License](https://github.com/scikit-learn/scikit-learn/blob/master/COPYING))
+ * xgboost ([v1.1.1](https://github.com/dmlc/xgboost); [Apache 2 License](https://github.com/dmlc/xgboost/blob/master/LICENSE))
+
 # Install
 1. Clone or download the repository, forks are also viable.
 
@@ -74,3 +81,8 @@ The author of this repository, Robert J. Sietsma, is currently working on refact
 
 #TODO
 - Make impute_preprocess more future proof by adding classes of CADD values and impute values.
+- Make -sd also skip ransearch.
+
+#FAQ
+- Q: My model training failed with an error in _joblib.externals.loky.process_executor.RemoteTraceback_ with "ValueError: unknown format is not supported". Why?
+    - A: This is possibly because the training data size is not large enough for a RandomSearchCV. Please try to increase the training data size or use the -b flag for the input.
